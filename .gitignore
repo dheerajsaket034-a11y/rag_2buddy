@@ -1,1 +1,27 @@
-.streamlit/secrets.toml
+# Environment & Secrets
+.env
+*.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+venv/
+.venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# FAISS cache (large binary files)
+vectorstore/*.pkl
+
+# Uploaded PDFs (keep data/ folder but ignore content)
+data/*.pdf
+
+# Streamlit
+.streamlit/
+
+# OS
+.DS_Store
+Thumbs.db

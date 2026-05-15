@@ -275,6 +275,7 @@ with st.sidebar:
     # Build index button
     if uploaded_files:
         if st.button("🚀 Build Knowledge Base", use_container_width=True):
+            # Save uploaded files to temp dir
             tmp_dir   = tempfile.mkdtemp()
             tmp_paths = []
             for uf in uploaded_files:
@@ -295,7 +296,7 @@ with st.sidebar:
                     )
                     st.session_state.index_ready  = True
                     st.session_state.doc_stats    = engine.stats()
-                    st.session_state.chat_history = []
+                    st.session_state.chat_history = []   # reset chat on new docs
                     st.success(f"✅ Indexed {n_pages} pages → {n_chunks} chunks")
                 except Exception as e:
                     st.error(f"❌ Error: {e}")
@@ -341,6 +342,7 @@ col_left, col_right = st.columns([3, 2], gap="large")
 
 with col_left:
 
+    # ── Not ready notice ──
     if not st.session_state.index_ready:
         st.markdown("""
 <div class="card">
@@ -354,6 +356,7 @@ with col_left:
 </div>
 """, unsafe_allow_html=True)
 
+    # ── Query input ──
     st.markdown('<div class="card-title">💬 Ask a Question</div>', unsafe_allow_html=True)
 
     with st.form("query_form", clear_on_submit=True):
@@ -365,6 +368,7 @@ with col_left:
         )
         submitted = st.form_submit_button("🔍 Ask Study Buddy", use_container_width=True)
 
+    # ── Answer ──
     if submitted and query.strip():
         if not st.session_state.index_ready:
             st.warning("⚠️ Please upload documents and build the knowledge base first.")
@@ -372,6 +376,7 @@ with col_left:
             with st.spinner("🤔 Thinking…"):
                 try:
                     result = engine.answer(query.strip(), top_k=top_k)
+                    # Save to history
                     st.session_state.chat_history.append({
                         "query":    query.strip(),
                         "answer":   result["answer"],
@@ -383,6 +388,7 @@ with col_left:
                 except Exception as e:
                     st.error(f"Error generating answer: {e}")
 
+    # ── Chat history (newest first) ──
     if st.session_state.chat_history:
         st.markdown("---")
         st.markdown('<div class="card-title">🕓 Conversation History</div>',
@@ -391,22 +397,25 @@ with col_left:
         for turn in reversed(st.session_state.chat_history):
             scope_cls = "" if turn["in_scope"] else " out-of-scope"
 
+            # User message
             st.markdown(f"""
 <div class="chat-user">
   <div class="chat-label">You</div>
   {turn['query']}
 </div>""", unsafe_allow_html=True)
 
+            # Bot answer
             st.markdown(f"""
 <div class="answer-box{scope_cls}">
   <div class="chat-label">{'📚 Study Buddy' if turn['in_scope'] else '⚠️ Out of Scope'}</div>
   {turn['answer']}
 </div>""", unsafe_allow_html=True)
 
+            # Retrieved chunks expander
             if turn["chunks"]:
                 with st.expander(f"📎 View {len(turn['chunks'])} retrieved source chunks"):
                     for i, chunk in enumerate(turn["chunks"], 1):
-                        score_pct   = min(int(chunk['score'] * 100), 100)
+                        score_pct = min(int(chunk['score'] * 100), 100)
                         score_bar_w = max(score_pct, 5)
                         st.markdown(f"""
 <div class="chunk-card">
@@ -419,6 +428,7 @@ with col_left:
 
 with col_right:
 
+    # ── Tips card ──
     st.markdown("""
 <div class="card">
   <div class="card-title">💡 Tips for Better Answers</div>
@@ -431,6 +441,7 @@ with col_right:
 </div>
 """, unsafe_allow_html=True)
 
+    # ── Sample questions ──
     st.markdown("""
 <div class="card">
   <div class="card-title">🎯 Sample Questions to Try</div>
@@ -444,6 +455,7 @@ with col_right:
 </div>
 """, unsafe_allow_html=True)
 
+    # ── How it works ──
     st.markdown("""
 <div class="card">
   <div class="card-title">⚙️ How It Works</div>
@@ -458,6 +470,7 @@ with col_right:
 </div>
 """, unsafe_allow_html=True)
 
+    # ── Judging criteria ──
     st.markdown("""
 <div class="card">
   <div class="card-title">🏆 Judging Criteria Coverage</div>
